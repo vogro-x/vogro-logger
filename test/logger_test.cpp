@@ -1,19 +1,10 @@
-# [vogro-logger](https://github.com/vogro-xx/vogro-logger)
-the logger module of vogro.
-
-## run test
-``` bash
-$ cd vogro-logger/test && make logger
-```
-
-## usage
-``` c++
 #include <iostream>
 #include "../logger.hpp"
 #include "../policy.hpp"
 #include "../severity.hpp"
 
-int main (void) {
+
+int main (void){
     
     auto file_logger=Logger<FilePolicy>::getLoggerInstance("vogro.log");
     for(auto i = 0; i<10; i++){
@@ -21,6 +12,7 @@ int main (void) {
         file_logger.PrintLog<severity_type::debug>("hello, vogro-logger");
         file_logger.PrintLog<severity_type::warn>("hello, vogro-logger");
         file_logger.PrintLog<severity_type::error>("hello, vogro-logger");
+
     }
 
     auto terminal_logger=Logger<TerminalPolicy>::getLoggerInstance("placehold");
@@ -33,5 +25,3 @@ int main (void) {
 
     return 0;
 }
-
-```
