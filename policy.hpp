@@ -3,7 +3,7 @@
  * All rights reserved.                                                 * 
  *                                                                      *
  * Apache License, Version 2.0                                          *
- * See http://www.apache.org/licenses/ for terms and contions for use,  *
+ * See http://www.apache.org/licenses/ for terms and conditions for use,*
  * reproduction, and distribution.                                      *
  *                                                                      *
  ************************************************************************/
