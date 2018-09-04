@@ -1,13 +1,3 @@
-# [vogro-logger](https://github.com/vogro-xx/vogro-logger)
-the logger module of vogro.
-
-## run test
-``` bash
-$ cd vogro-logger/test && make logger
-```
-
-## usage
-``` c++
 #include "../include/vogro_logger.hpp"
 
 int main(void) {
@@ -32,5 +22,3 @@ int main(void) {
 
   return 0;
 }
-
-```

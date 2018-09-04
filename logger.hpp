@@ -1,6 +1,6 @@
-/************************************************************************ 
+/************************************************************************
  * Copyright (c) 2018- , Andrewpqc <andrewpqc@mails.ccnu.edu>           *
- * All rights reserved.                                                 * 
+ * All rights reserved.                                                 *
  *                                                                      *
  * Apache License, Version 2.0                                          *
  * See http://www.apache.org/licenses/ for terms and conditions for use,*
@@ -11,17 +11,18 @@
 #ifndef __LOGGER_HPP__
 #define __LOGGER_HPP__
 
-#include <string>
-#include <memory>
-#include <iostream>
-#include <sstream>
-#include <typeinfo>
 #include <cstdio>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <typeinfo>
 #include "severity.hpp"
 
-//color mocro
+// color mocro
 // #define	CLEARSCREEN() printf("\033[H\033[2J")
-#define INITCOLOR(color) std::string("\033[") + std::string(color) + std::string("m")
+#define INITCOLOR(color) \
+  std::string("\033[") + std::string(color) + std::string("m")
 #define RED_COLOR "31"
 #define GREEN_COLOR "32"
 #define YELLOW_COLOR "33"
@@ -30,113 +31,118 @@
 
 template <typename policy_type>
 class Logger {
+ public:
+  static Logger& getLoggerInstance(std::string filename_or_addr) {
+    static Logger logger(filename_or_addr);
+    return logger;
+  }
 
-  public:
-    static Logger& getLoggerInstance(std::string filename_or_addr) {
-        static Logger logger(filename_or_addr);
-        return logger;
+  Logger(const Logger&) = delete;
+  Logger& operator=(const Logger&) = delete;
+
+  // template<typename...Args>
+  template <severity_type severity, typename... Args>
+  void PrintLog(const Args&... args) {
+    // init p and ssp only once
+    if (!p) {
+      p = std::shared_ptr<policy_type>(new policy_type(this->filename_or_addr));
+      std::string t = typeid(decltype(*p)).name();
+      if (t == "14TerminalPolicy") {
+        this->is_terminal = true;
+      }
+    }
+    if (!ssp) {
+      ssp = std::shared_ptr<std::stringstream>(new std::stringstream);
     }
 
-    Logger(const Logger&) = delete;
-    Logger& operator=(const Logger&) = delete;
+    (*ssp) << "[" << getCurrentTime() << "] ";
+    switch (severity) {
+      case severity_type::info:
+        if (this->is_terminal)
+          (*ssp) << INITCOLOR(GREEN_COLOR) << "<INFO>" << INITCOLOR(ZERO_COLOR)
+                 << ": ";  // with color
+        else
+          (*ssp) << "<INFO>: ";  // no color
+        break;
 
-    
+      case severity_type::debug:
+        if (this->is_terminal)
+          (*ssp) << INITCOLOR(BLUE_COLOR) << "<DEBUG>" << INITCOLOR(ZERO_COLOR)
+                 << ": ";
+        else
+          (*ssp) << "<DEBUG>: ";
+        break;
 
-    // template<typename...Args>
-    template <severity_type severity, typename... Args>
-    void PrintLog(const Args &... args) {
-        // init p and ssp only once
-        if (!p) {
-            p = std::shared_ptr<policy_type>(new policy_type(this->filename_or_addr));
-            std::string t = typeid(decltype(*p)).name();
-            if (t == "14TerminalPolicy") {
-                this->is_terminal = true;
-            }
-        }
-        if (!ssp) {
-            ssp = std::shared_ptr<std::stringstream>(new std::stringstream);
-        }
+      case severity_type::warn:
+        if (this->is_terminal)
+          (*ssp) << INITCOLOR(YELLOW_COLOR) << "<WARN>" << INITCOLOR(ZERO_COLOR)
+                 << ": ";
+        else
+          (*ssp) << "<WARN>: ";
+        break;
 
-        (*ssp) << "[" << getCurrentTime() << "] ";
-        switch (severity) {
+      case severity_type::error:
+        if (this->is_terminal)
+          (*ssp) << INITCOLOR(RED_COLOR) << "<ERROR>" << INITCOLOR(ZERO_COLOR)
+                 << ": ";
+        else
+          (*ssp) << "<ERROR>: ";
+        break;
+    };
+    this->print_impl(args...);
+  }
 
-        case severity_type::info:
-            if (this->is_terminal) 
-                (*ssp) << INITCOLOR(GREEN_COLOR) << "<INFO>" << INITCOLOR(ZERO_COLOR) << ": "; //with color
-            else
-                (*ssp) << "<INFO>: "; // no color
-            break;
+  template <typename... Args>
+  void LOG_INFO(const Args&... args) {
+    this->PrintLog<severity_type::info>(args...);
+  }
 
-        case severity_type::debug:
-            if (this->is_terminal) 
-                (*ssp) << INITCOLOR(BLUE_COLOR) << "<DEBUG>" << INITCOLOR(ZERO_COLOR) << ": ";
-            else
-                (*ssp) << "<DEBUG>: ";
-            break;
+  template <typename... Args>
+  void LOG_DEBUG(const Args&... args) {
+    this->PrintLog<severity_type::debug>(args...);
+  }
 
-        case severity_type::warn:
-            if (this->is_terminal) 
-                (*ssp) << INITCOLOR(YELLOW_COLOR) << "<WARN>" << INITCOLOR(ZERO_COLOR) << ": ";
-            else
-                (*ssp) << "<WARN>: ";
-            break;
+  template <typename... Args>
+  void LOG_WARN(const Args&... args) {
+    this->PrintLog<severity_type::warn>(args...);
+  }
 
-        case severity_type::error:
-            if (this->is_terminal) 
-                (*ssp) << INITCOLOR(RED_COLOR) << "<ERROR>" << INITCOLOR(ZERO_COLOR) << ": ";
-            else
-                (*ssp) << "<ERROR>: ";
-            break;
+  template <typename... Args>
+  void LOG_ERROR(const Args&... args) {
+    this->PrintLog<severity_type::error>(args...);
+  }
 
-        };
-        this->print_impl(args...);
-    }
+ private:
+  // policy_type policy;
+  std::shared_ptr<policy_type> p;
 
-    template<typename... Args>
-    void LOG_INFO(const Args& ...args){ this->PrintLog<severity_type::info>(args...); }
+  std::string filename_or_addr;
 
-    template<typename... Args>
-    void LOG_DEBUG(const Args& ...args){ this->PrintLog<severity_type::debug>(args...); }
+  std::shared_ptr<std::stringstream> ssp;
 
-    template<typename... Args>
-    void LOG_WARN(const Args& ...args){  this->PrintLog<severity_type::warn>(args...); }
+  bool is_terminal = false;
 
-    template<typename... Args>
-    void LOG_ERROR(const Args& ...args){ this->PrintLog<severity_type::error>(args...); }
+  void print_impl() {  // Recursive termination function
+    p->write(ssp->str());
+    ssp->str("");  // ssp->empty(),ssp->clear() can not clean ssp
+  }
 
-  private:
-    // policy_type policy;
-    std::shared_ptr<policy_type> p;
+  template <typename First, typename... Rest>
+  void print_impl(const First& parm1, const Rest&... parm) {
+    (*ssp) << parm1 << " ";
+    print_impl(parm...);
+  }
 
-    std::string filename_or_addr;
+  std::string getCurrentTime() {
+    time_t t;
+    time(&t);
+    struct tm* tmp_time = localtime(&t);
+    char s[100];
+    strftime(s, sizeof(s), "%04Y/%02m/%02d %H:%M:%S", tmp_time);
+    return static_cast<std::string>(s);
+  }
 
-    std::shared_ptr<std::stringstream> ssp;
-
-    bool is_terminal = false;
-
-    void print_impl() { // Recursive termination function
-        p->write(ssp->str());
-        ssp->str(""); //ssp->empty(),ssp->clear() can not clean ssp
-    }
-
-    template <typename First, typename... Rest>
-    void print_impl(const First &parm1, const Rest &... parm) {
-        (*ssp) << parm1 << " ";
-        print_impl(parm...);
-    }
-
-    std::string getCurrentTime() {
-        time_t t;
-        time(&t);
-        struct tm *tmp_time = localtime(&t);
-        char s[100];
-        strftime(s, sizeof(s), "%04Y/%02m/%02d %H:%M:%S", tmp_time);
-        return static_cast<std::string>(s);
-    }
-
-    Logger(std::string &f) {
-        this->filename_or_addr = f;
-    }
+  Logger(std::string& f) { this->filename_or_addr = f; }
 };
 
 #endif
