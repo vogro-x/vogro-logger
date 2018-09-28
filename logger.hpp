@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string>
 #include <typeinfo>
+#include <mutex>
 #include "severity.hpp"
 
 // color mocro
@@ -55,6 +56,7 @@ class Logger {
       ssp = std::shared_ptr<std::stringstream>(new std::stringstream);
     }
 
+    write_lock.lock();
     (*ssp) << "[" << getCurrentTime() << "] ";
     switch (severity) {
       case severity_type::info:
@@ -90,6 +92,7 @@ class Logger {
         break;
     };
     this->print_impl(args...);
+    write_lock.unlock();
   }
 
   template <typename... Args>
@@ -113,6 +116,7 @@ class Logger {
   }
 
  private:
+  std::mutex write_lock;
   // policy_type policy;
   std::shared_ptr<policy_type> p;
 
