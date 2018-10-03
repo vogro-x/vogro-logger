@@ -52,8 +52,7 @@ class Logger {
     // init p and ssp only once
     if (!p) {
       p = std::shared_ptr<policy_type>(new policy_type(this->filename_or_addr));
-      std::string t = typeid(decltype(*p)).name();
-      if (t == "14TerminalPolicy") {
+      if (typeid(TerminalPolicy) == typeid(*p)) {
         this->is_terminal = true;
       }
     }
